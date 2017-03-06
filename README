@@ -1,0 +1,12 @@
+@author Yifu
+Step 1: run the C
+input ./main
+Then you will see the service is waiting..
+
+Step 2: open another console and run the java
+input java Test
+Then you will see the value from GetLocalTime and GetLocalOS.
+you can compare the value between C and Java
+
+Enjoy it!
+

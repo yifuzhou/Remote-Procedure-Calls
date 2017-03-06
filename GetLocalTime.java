@@ -1,10 +1,3 @@
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
@@ -14,8 +7,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.io.InputStream;  
-import java.io.OutputStream; 
+import java.net.*;
+import java.io.*;
 
 public class GetLocalTime {
 
@@ -33,7 +26,6 @@ public class GetLocalTime {
     	int length = time.getSize()+valid.getSize();
     	byte[] buf = new byte[100+4+length];
     	int offset = 0;
-    	System.out.println(length);
 
     	String str = "GetLocalTime";
     	byte[] str_b = str.getBytes();
@@ -42,8 +34,7 @@ public class GetLocalTime {
     	}
     	offset = 100;
     	
-    	byte[] length_b = int2byte(length);
-    	System.out.println(length_b.length);
+    	byte[] length_b = InttoBytes(length);
     	for (int i = 0; i < length_b.length; i++) {
     		buf[offset + i] = length_b[i];
     	}
@@ -60,21 +51,38 @@ public class GetLocalTime {
     		buf[offset + i] = valid_b[i];
     	}
     	offset = offset + valid_b.length;
-    	
-    	System.out.println(offset);
-    	System.out.println(buf);
+
     	
     	//create a socket to send
     	try {
-            //Create Socket object
-            Socket socket=new Socket("localhost",8888);
-
-            OutputStream  out = socket.getOutputStream();
-            out.write(buf);
-
+            Socket socket=new Socket(IP,port);
             
-            out.close();
-            socket.close();
+            // create text reader and writer
+    		DataInputStream inStream  = new DataInputStream(socket.getInputStream());
+    		DataOutputStream outStream = new DataOutputStream(socket.getOutputStream());
+
+    		byte[] bufLengthInBinary = InttoBytes(buf.length);
+    		
+    		// send 4 bytes
+    		outStream.write(bufLengthInBinary, 0, bufLengthInBinary.length);
+    		// send the string
+    		outStream.write(buf, 0, buf.length);
+    		outStream.flush();
+    		
+    		// read the data back
+            inStream.readFully(bufLengthInBinary); // ignore the first 4 bytes
+            inStream.readFully(buf); 
+            byte[]time_value = new byte[4];
+            for (int i = 0; i < 4; i++) {
+            	time_value[i] = buf[104 + i];
+            }
+            time.setValue(time_value);
+
+         
+            // convert the binary bytes to string
+            String ret = new String(buf);
+            
+            
             
         } catch (UnknownHostException e) {
             e.printStackTrace();
@@ -85,21 +93,16 @@ public class GetLocalTime {
     	return 0;
     }
     
-    public byte[] int2byte(int i) 
-    {  
-    	byte[] result = new byte[4];  
-    	  
-    	result[0] = (byte) (i & 0xff); 
-    	result[1] = (byte) ((i >> 8) & 0xff);  
-    	result[2] = (byte) ((i >> 16) & 0xff);  
-    	result[3] = (byte) (i >>> 24);   
-    	return result; 
-    }
-    
-    public static void main(String args[])
-    {
-    	GetLocalTime gt = new GetLocalTime();
-    	gt.execute("", 1);
-    }
+	static private byte[] InttoBytes(int i)
+	{
+	  byte[] result = new byte[4];
 
+	  result[0] = (byte) (i >> 24);
+	  result[1] = (byte) (i >> 16);
+	  result[2] = (byte) (i >> 8);
+	  result[3] = (byte) (i /*>> 0*/);
+
+	  return result;
+	}
+    
 }
