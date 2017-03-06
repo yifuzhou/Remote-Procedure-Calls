@@ -12,7 +12,7 @@ public class c_char {
     	return 0;
     }
     
-    public void setValue(byte[] buf)
+    public void setValue(String s)
     {
     	
     }
